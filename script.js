@@ -1,12 +1,14 @@
 // DOM Elements
 const searchInput = document.getElementById('search-input');
 const searchBtn = document.getElementById('search-btn');
+
+// Weather data elements
 const locationElement = document.querySelector('.location h2');
 const dateTimeElement = document.querySelector('.date-time');
 const tempElement = document.querySelector('.temperature');
 const descriptionElement = document.querySelector('.weather-description');
 const weatherIconElement = document.querySelector('.weather-icon');
-const errorElement = document.querySelector('.error');
+const errorElement = document.querySelector('.error'); // Added for error messages
 
 // Weather details elements
 const windElement = document.querySelector('.detail-item:nth-child(1) p');
@@ -22,12 +24,15 @@ const forecastLows = document.querySelectorAll('.forecast-low');
 
 // Mapping for weather icons
 const weatherIcons = {
+    'sunny': 'fas fa-sun',
+    'partly cloudy': 'fas fa-cloud-sun',
+    'cloudy': 'fas fa-cloud',
+    'rainy': 'fas fa-cloud-rain',
     'clear sky': 'fas fa-sun',
     'few clouds': 'fas fa-cloud-sun',
     'scattered clouds': 'fas fa-cloud',
     'broken clouds': 'fas fa-cloud',
     'shower rain': 'fas fa-cloud-showers-heavy',
-    'rain': 'fas fa-cloud-rain',
     'thunderstorm': 'fas fa-bolt',
     'snow': 'fas fa-snowflake',
     'mist': 'fas fa-smog'
@@ -48,110 +53,67 @@ function hideError() {
     }
 }
 
-// Function to fetch weather data from API
-async function fetchWeatherData(city) {
-    // Replace 'YOUR_API_KEY' with your actual OpenWeatherMap API key
-    const apiKey = 'YOUR_API_KEY';
-    const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
-
-    try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error('City not found. Please try again.');
-        }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        displayError(error.message);
-        return null;
-    }
-}
-
-// Function to fetch forecast data (separate API call)
-async function fetchForecastData(city) {
-    const apiKey = 'YOUR_API_KEY';
-    const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
-
-    try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-            throw new Error('Forecast data not available.');
-        }
-        const data = await response.json();
-        const dailyForecast = data.list.filter(item => item.dt_txt.includes('12:00:00'));
-        return dailyForecast.slice(0, 5);
-    } catch (error) {
-        return null;
-    }
-}
-
-// Update weather data with a real API call
-async function updateWeather(city) {
-    hideError();
-
-    const weatherData = await fetchWeatherData(city);
-    if (!weatherData) return;
-
-    locationElement.innerHTML = `<i class="fas fa-location-dot"></i> ${weatherData.name}, ${weatherData.sys.country}`;
-
-    // Calculate and update local date and time using the timezone offset
-    const timezoneOffset = weatherData.timezone;
-    const localTime = new Date(Date.now() + timezoneOffset * 1000);
+// Current date and time
+function updateDateTime() {
+    const now = new Date();
     const options = { 
         weekday: 'long', 
         year: 'numeric', 
         month: 'long', 
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
+        minute: '2-digit'
     };
-    dateTimeElement.textContent = localTime.toLocaleDateString('en-US', options);
+    dateTimeElement.textContent = now.toLocaleDateString('en-US', options);
+}
 
-    // Update current weather
-    const description = weatherData.weather[0].description;
-    tempElement.textContent = `${Math.round(weatherData.main.temp)}°C`;
-    descriptionElement.textContent = description.charAt(0).toUpperCase() + description.slice(1);
+// Update weather data (in a real app, this would come from an API)
+function updateWeather(city) {
+    hideError();
+
+    // In a real application, you would make an API call here.
+    // Example: fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=YOUR_API_KEY`)
     
-    const iconClass = weatherIcons[description.toLowerCase()] || 'fas fa-cloud';
-    weatherIconElement.innerHTML = `<i class="${iconClass}"></i>`;
-    
-    // Update weather details
-    windElement.textContent = `${weatherData.wind.speed} m/s`;
-    humidityElement.textContent = `${weatherData.main.humidity}%`;
-    pressureElement.textContent = `${weatherData.main.pressure} hPa`;
-    visibilityElement.textContent = `${weatherData.visibility / 1000} km`;
-    
-    // Update forecast
-    const forecastData = await fetchForecastData(city);
-    if (forecastData) {
-        forecastDays.forEach((dayElement, index) => {
-            if (forecastData[index]) {
-                const date = new Date(forecastData[index].dt * 1000);
-                dayElement.textContent = date.toLocaleDateString('en-US', { weekday: 'long' });
-            }
+    // For now, we'll use a placeholder `setTimeout` to simulate a network delay.
+    setTimeout(() => {
+        // Update location
+        locationElement.innerHTML = `<i class="fas fa-location-dot"></i> ${city}`;
+
+        // Update current weather with placeholder data
+        const description = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Rainy'][Math.floor(Math.random() * 4)];
+        tempElement.textContent = `${Math.floor(Math.random() * 15) + 18}°C`;
+        descriptionElement.textContent = description;
+        
+        // Use the map to set the icon
+        const iconClass = weatherIcons[description.toLowerCase()] || 'fas fa-cloud';
+        weatherIconElement.innerHTML = `<i class="${iconClass}"></i>`;
+        
+        // Update weather details
+        windElement.textContent = `${Math.floor(Math.random() * 20) + 5} km/h`;
+        humidityElement.textContent = `${Math.floor(Math.random() * 40) + 40}%`;
+        pressureElement.textContent = `${Math.floor(Math.random() * 20) + 1000} hPa`;
+        visibilityElement.textContent = `${Math.floor(Math.random() * 5) + 8} km`;
+        
+        // Update forecast
+        const days = ['Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        forecastDays.forEach((day, index) => {
+            day.textContent = days[index];
         });
         
-        forecastIcons.forEach((iconElement, index) => {
-            if (forecastData[index]) {
-                const description = forecastData[index].weather[0].description;
-                const iconClass = weatherIcons[description.toLowerCase()] || 'fas fa-cloud';
-                iconElement.className = iconClass;
-            }
+        forecastIcons.forEach(icon => {
+            const descriptions = Object.keys(weatherIcons);
+            const randDescription = descriptions[Math.floor(Math.random() * descriptions.length)];
+            icon.className = weatherIcons[randDescription];
         });
         
-        forecastHighs.forEach((highElement, index) => {
-            if (forecastData[index]) {
-                highElement.textContent = `${Math.round(forecastData[index].main.temp_max)}°`;
-            }
+        forecastHighs.forEach(high => {
+            high.textContent = `${Math.floor(Math.random() * 10) + 20}°`;
         });
         
-        forecastLows.forEach((lowElement, index) => {
-            if (forecastData[index]) {
-                lowElement.textContent = `${Math.round(forecastData[index].main.temp_min)}°`;
-            }
+        forecastLows.forEach(low => {
+            low.textContent = `${Math.floor(Math.random() * 10) + 10}°`;
         });
-    }
+    }, 500); // Simulate a 500ms API call delay
 }
 
 // Event Listeners
@@ -176,6 +138,10 @@ searchInput.addEventListener('keyup', (e) => {
         }
     }
 });
+
+// Initialize
+updateDateTime();
+setInterval(updateDateTime, 60000); // Update time every minute
 
 // Initial weather data
 updateWeather('New York, US');
